@@ -1,6 +1,6 @@
 {
   "name": "reelscribe",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Official Node.js/TypeScript SDK for the ReelScribe API — transcribe Instagram Reels, TikTok videos, and YouTube shorts programmatically.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -32,7 +32,7 @@
     "sdk",
     "speech-to-text"
   ],
-  "author": "SIAN Agency (https://sian-agency.online)",
+  "author": "SIAN Agency (https://www.sian-agency.online)",
   "license": "MIT",
   "homepage": "https://www.reelscribe.app",
   "repository": {
