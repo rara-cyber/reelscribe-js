@@ -183,4 +183,4 @@ const rs = new ReelScribe('rs_your_api_key', {
 
 ---
 
-Built by [SIAN Agency](https://www.sian-agency.online)
+Built by [SIÁN Agency](https://www.sian-agency.online)
