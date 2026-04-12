@@ -180,3 +180,7 @@ const rs = new ReelScribe('rs_your_api_key', {
 ## License
 
 [MIT](LICENSE)
+
+---
+
+Built by [SIAN Agency](https://sian-agency.online)
