@@ -132,7 +132,7 @@ export interface ApiErrorBody {
 // ---------------------------------------------------------------------------
 
 export interface ReelScribeOptions {
-  /** Override the base URL (default: `https://www.reelscribe.app`). */
+  /** Override the base URL (default: `https://reelscribe.app`). */
   baseUrl?: string
   /** Override the global `fetch` implementation. */
   fetch?: typeof globalThis.fetch

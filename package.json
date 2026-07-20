@@ -1,6 +1,6 @@
 {
   "name": "reelscribe",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Official Node.js/TypeScript SDK for the ReelScribe API — transcribe Instagram Reels, TikTok videos, and YouTube shorts programmatically.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -34,7 +34,7 @@
   ],
   "author": "SIÁN Agency (https://www.sian-agency.online)",
   "license": "MIT",
-  "homepage": "https://www.reelscribe.app",
+  "homepage": "https://reelscribe.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/rara-cyber/reelscribe-js.git"

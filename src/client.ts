@@ -14,7 +14,7 @@ import type {
   UpdateSettingsOptions,
 } from './types'
 
-const DEFAULT_BASE_URL = 'https://www.reelscribe.app'
+const DEFAULT_BASE_URL = 'https://reelscribe.app'
 
 /**
  * ReelScribe API client.
@@ -26,7 +26,7 @@ const DEFAULT_BASE_URL = 'https://www.reelscribe.app'
  * const result = await rs.getTranscription({ requestId })
  * ```
  *
- * @see https://www.reelscribe.app/api — full API documentation
+ * @see https://reelscribe.app/api — full API documentation
  */
 export class ReelScribe {
   private readonly apiKey: string
@@ -34,7 +34,7 @@ export class ReelScribe {
   private readonly _fetch: typeof globalThis.fetch
 
   constructor(apiKey: string, options?: ReelScribeOptions) {
-    if (!apiKey) throw new Error('An API key is required. Get one at https://www.reelscribe.app/api')
+    if (!apiKey) throw new Error('An API key is required. Get one at https://reelscribe.app/api')
     this.apiKey = apiKey
     this.baseUrl = (options?.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, '')
     this._fetch = options?.fetch ?? globalThis.fetch
@@ -75,7 +75,7 @@ export class ReelScribe {
    *
    * If the video was already transcribed, returns a `DuplicateResult` instead.
    *
-   * @see https://www.reelscribe.app/api — POST /v1/transcribe
+   * @see https://reelscribe.app/api — POST /v1/transcribe
    */
   async transcribe(options: TranscribeOptions): Promise<TranscribeResult | DuplicateResult> {
     return this.request('POST', 'transcribe', options)
@@ -84,7 +84,7 @@ export class ReelScribe {
   /**
    * Fetch a single transcription by Convex document ID or requestId.
    *
-   * @see https://www.reelscribe.app/api — GET /v1/transcriptions?id=...
+   * @see https://reelscribe.app/api — GET /v1/transcriptions?id=...
    */
   async getTranscription(options: GetTranscriptionOptions): Promise<Transcription> {
     const params = new URLSearchParams()
@@ -96,7 +96,7 @@ export class ReelScribe {
   /**
    * List all your transcriptions, optionally filtered by status.
    *
-   * @see https://www.reelscribe.app/api — GET /v1/transcriptions
+   * @see https://reelscribe.app/api — GET /v1/transcriptions
    */
   async listTranscriptions(options?: ListTranscriptionsOptions): Promise<TranscriptionList> {
     const params = new URLSearchParams()
@@ -108,7 +108,7 @@ export class ReelScribe {
   /**
    * Check your credit balance, subscription tier, and storage usage.
    *
-   * @see https://www.reelscribe.app/api — GET /v1/credits
+   * @see https://reelscribe.app/api — GET /v1/credits
    */
   async getCredits(): Promise<Credits> {
     return this.request('GET', 'credits')
@@ -117,7 +117,7 @@ export class ReelScribe {
   /**
    * Get your current settings.
    *
-   * @see https://www.reelscribe.app/api — GET /v1/settings
+   * @see https://reelscribe.app/api — GET /v1/settings
    */
   async getSettings(): Promise<Settings> {
     return this.request('GET', 'settings')
@@ -126,7 +126,7 @@ export class ReelScribe {
   /**
    * Update your settings (e.g. auto-prune storage).
    *
-   * @see https://www.reelscribe.app/api — PATCH /v1/settings
+   * @see https://reelscribe.app/api — PATCH /v1/settings
    */
   async updateSettings(options: UpdateSettingsOptions): Promise<Settings> {
     return this.request('PATCH', 'settings', options)
@@ -135,7 +135,7 @@ export class ReelScribe {
   /**
    * Check whether the API is healthy. Does not require authentication.
    *
-   * @see https://www.reelscribe.app/api — GET /v1/health
+   * @see https://reelscribe.app/api — GET /v1/health
    */
   async health(): Promise<HealthCheck> {
     const res = await this._fetch(`${this.baseUrl}/v1/health`)

@@ -1,6 +1,6 @@
 # ReelScribe Node.js SDK
 
-Official Node.js/TypeScript client for the [ReelScribe](https://www.reelscribe.app) API — transcribe Instagram Reels, TikTok videos, and YouTube Shorts programmatically.
+Official Node.js/TypeScript client for the [ReelScribe](https://reelscribe.app) API — transcribe Instagram Reels, TikTok videos, and YouTube Shorts programmatically.
 
 [![npm version](https://img.shields.io/npm/v/reelscribe)](https://www.npmjs.com/package/reelscribe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
@@ -28,7 +28,7 @@ const transcription = await rs.getTranscription({ requestId })
 console.log(transcription.transcription)
 ```
 
-> Get your API key from the [ReelScribe dashboard](https://www.reelscribe.app/api).
+> Get your API key from the [ReelScribe dashboard](https://reelscribe.app/api).
 
 ## Usage
 
@@ -55,7 +55,7 @@ const result = await rs.transcribe({
 })
 ```
 
-Your server will receive the full transcription result as a POST request. See the [webhook docs](https://www.reelscribe.app/api) for the payload format.
+Your server will receive the full transcription result as a POST request. See the [webhook docs](https://reelscribe.app/api) for the payload format.
 
 ### Get a Transcription
 
@@ -169,13 +169,13 @@ const rs = new ReelScribe('rs_your_api_key', {
 ## Requirements
 
 - Node.js 18+ (uses native `fetch`)
-- A [ReelScribe](https://www.reelscribe.app) account with API access
+- A [ReelScribe](https://reelscribe.app) account with API access
 
 ## Links
 
-- [ReelScribe](https://www.reelscribe.app) — Video transcription for content creators
-- [API Documentation](https://www.reelscribe.app/api) — Full endpoint reference & API key management
-- [Pricing](https://www.reelscribe.app/pricing) — Plans starting at $9.99/month
+- [ReelScribe](https://reelscribe.app) — Video transcription for content creators
+- [API Documentation](https://reelscribe.app/api) — Full endpoint reference & API key management
+- [Pricing](https://reelscribe.app/pricing) — Plans starting at $9.99/month
 
 ## License
 
