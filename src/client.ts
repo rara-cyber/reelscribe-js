@@ -11,7 +11,6 @@ import type {
   TranscribeResult,
   Transcription,
   TranscriptionList,
-  UpdateSettingsOptions,
 } from './types'
 
 const DEFAULT_BASE_URL = 'https://reelscribe.app'
@@ -94,19 +93,39 @@ export class ReelScribe {
   }
 
   /**
-   * List all your transcriptions, optionally filtered by status.
+   * Fetch one page of your transcriptions, newest first.
+   *
+   * This returns a **single page** — at most `limit` rows (default 100, max
+   * 200) — not your whole library. `total` is the length of this page; there is
+   * no library count. To read everything, loop on `hasMore`/`nextCursor`:
+   *
+   * @example
+   * ```ts
+   * const all = []
+   * let cursor: string | null = null
+   * do {
+   *   const page = await rs.listTranscriptions({ cursor, limit: 200 })
+   *   all.push(...page.transcriptions)
+   *   cursor = page.nextCursor
+   * } while (cursor)
+   * ```
    *
    * @see https://reelscribe.app/api — GET /v1/transcriptions
    */
   async listTranscriptions(options?: ListTranscriptionsOptions): Promise<TranscriptionList> {
     const params = new URLSearchParams()
     if (options?.status) params.set('status', options.status)
+    if (options?.limit != null) params.set('limit', String(options.limit))
+    if (options?.cursor) params.set('cursor', options.cursor)
     const qs = params.toString()
     return this.request('GET', `transcriptions${qs ? `?${qs}` : ''}`)
   }
 
   /**
-   * Check your credit balance, subscription tier, and storage usage.
+   * Check your credit balance, subscription tier, storage usage and retention.
+   *
+   * `storageLimit` is always `-1` — there is no storage cap on any tier.
+   * Read `retention` to learn how long transcriptions are kept.
    *
    * @see https://reelscribe.app/api — GET /v1/credits
    */
@@ -115,21 +134,17 @@ export class ReelScribe {
   }
 
   /**
-   * Get your current settings.
+   * Read your account settings, which are now reporting-only: the response
+   * contains your retention policy and nothing else.
+   *
+   * There is no counterpart writer. `autoPruneStorage` — the only setting this
+   * endpoint ever had — was removed when storage moved from per-tier count
+   * limits to time-based retention, so `PATCH /v1/settings` always fails.
    *
    * @see https://reelscribe.app/api — GET /v1/settings
    */
   async getSettings(): Promise<Settings> {
     return this.request('GET', 'settings')
-  }
-
-  /**
-   * Update your settings (e.g. auto-prune storage).
-   *
-   * @see https://reelscribe.app/api — PATCH /v1/settings
-   */
-  async updateSettings(options: UpdateSettingsOptions): Promise<Settings> {
-    return this.request('PATCH', 'settings', options)
   }
 
   /**

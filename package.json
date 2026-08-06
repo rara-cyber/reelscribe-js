@@ -1,6 +1,6 @@
 {
   "name": "reelscribe",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Official Node.js/TypeScript SDK for the ReelScribe API — transcribe Instagram Reels, TikTok videos, and YouTube shorts programmatically.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -17,6 +17,8 @@
   ],
   "scripts": {
     "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -46,6 +48,7 @@
     "node": ">=18.0.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.3.14",
     "tsup": "^8.0.0",
     "typescript": "^5.4.0"
   }

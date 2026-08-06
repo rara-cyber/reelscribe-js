@@ -19,13 +19,18 @@ import { ReelScribe } from 'reelscribe'
 const rs = new ReelScribe('rs_your_api_key')
 
 // Submit a video for transcription
-const { requestId } = await rs.transcribe({
+const result = await rs.transcribe({
   url: 'https://www.instagram.com/reel/ABC123/',
 })
 
-// Poll for the result
-const transcription = await rs.getTranscription({ requestId })
-console.log(transcription.transcription)
+if ('duplicate' in result) {
+  // Already transcribed — the text comes straight back, no credit spent.
+  console.log(result.transcription.transcription)
+} else {
+  // Poll for the result
+  const transcription = await rs.getTranscription({ requestId: result.requestId })
+  console.log(transcription.transcription)
+}
 ```
 
 > Get your API key from the [ReelScribe dashboard](https://reelscribe.app/api).
@@ -34,14 +39,22 @@ console.log(transcription.transcription)
 
 ### Transcribe a Video
 
-Submit an Instagram Reel, TikTok video, or YouTube Short for transcription. Costs 1 credit per request.
+Submit an Instagram Reel, TikTok video, YouTube Short, or Facebook Reel for transcription. Costs 1 credit per request.
+
+`transcribe()` returns either a `TranscribeResult` or — when you have already
+transcribed that URL — a `DuplicateResult` carrying the existing text, with no
+credit spent. Narrow on the `duplicate` field before reading `requestId`:
 
 ```ts
 const result = await rs.transcribe({
   url: 'https://www.youtube.com/shorts/dQw4w9WgXcQ',
 })
 
-console.log(result.requestId) // use this to check status
+if ('duplicate' in result) {
+  console.log(result.transcription.id) // already have it
+} else {
+  console.log(result.requestId)        // use this to check status
+}
 ```
 
 #### With Webhook
@@ -80,12 +93,40 @@ const t = await rs.getTranscription({ id: 'abc123' })
 
 ### List Transcriptions
 
-```ts
-// All transcriptions
-const { transcriptions, total } = await rs.listTranscriptions()
+`listTranscriptions()` is cursor-paginated and returns **one page** — at most
+`limit` rows, newest first. `limit` defaults to 100 and is clamped to 200.
 
-// Filter by status
-const completed = await rs.listTranscriptions({ status: 'completed' })
+```ts
+const page = await rs.listTranscriptions({ limit: 50 })
+
+console.log(page.transcriptions) // up to 50 rows
+console.log(page.hasMore)        // true if further pages remain
+console.log(page.nextCursor)     // pass back to fetch the next page
+```
+
+> **`total` is the length of the page you just received, not the size of your
+> library.** The API deliberately does not report a library count. Branch on
+> `hasMore`, never on `total`.
+
+To read a whole library, keep passing `nextCursor` back until it is `null`:
+
+```ts
+const all = []
+let cursor: string | null = null
+
+do {
+  const page = await rs.listTranscriptions({ cursor, limit: 200 })
+  all.push(...page.transcriptions)
+  cursor = page.nextCursor
+} while (cursor)
+
+console.log(all.length) // every transcription in the account
+```
+
+Filtering by status pages the same way:
+
+```ts
+const completed = await rs.listTranscriptions({ status: 'completed', limit: 200 })
 ```
 
 ### Check Credits
@@ -96,20 +137,41 @@ const credits = await rs.getCredits()
 console.log(credits.credits)            // 450
 console.log(credits.tier)               // 'creator'
 console.log(credits.subscriptionStatus) // 'active'
-console.log(credits.storageUsed)        // 42
-console.log(credits.storageLimit)       // 100
+console.log(credits.storageUsed)        // 42  — completed transcriptions stored
+console.log(credits.storageUsedCapped)  // false — true means the real figure is higher
+console.log(credits.storageLimit)       // -1  — always; there is no storage cap
+console.log(credits.retention)          // { mode: 'unlimited', deletesAfter: null, ... }
 ```
+
+There are no storage caps on any tier. Storage is bounded by time instead —
+`retention` tells you how long transcriptions are kept:
+
+| `mode` | Meaning |
+|--------|---------|
+| `unlimited` | Subscription active — nothing is ever auto-deleted |
+| `rolling` | Never subscribed — each transcription is removed `retentionDays` after it was created |
+| `lapsing` | Subscription ended — the whole library is removed at `deletesAfter` (epoch ms) |
+
+Anything created before `retention.policyDate` is grandfathered and never
+auto-deleted, on any tier.
+
+`storageUsed` is a bounded probe (up to 2,000 rows). When `storageUsedCapped`
+is `true`, treat `storageUsed` as a floor rather than an exact count.
 
 ### Settings
 
-```ts
-// Read settings
-const settings = await rs.getSettings()
-console.log(settings.autoPruneStorage) // true
+Settings are read-only — they report your retention policy and nothing else.
 
-// Update settings
-await rs.updateSettings({ autoPruneStorage: false })
+```ts
+const { retention } = await rs.getSettings()
+
+console.log(retention.mode)          // 'rolling'
+console.log(retention.retentionDays) // 30
 ```
+
+There is no `updateSettings()`. `autoPruneStorage` was the only writable
+setting and it no longer exists: it deleted your oldest work to stay under a
+count cap, and there are no count caps.
 
 ### Health Check
 
@@ -142,9 +204,34 @@ try {
 | `INVALID_URL` | 400 | Unsupported video platform |
 | `UNAUTHORIZED` | 401 | Missing or invalid API key |
 | `INSUFFICIENT_CREDITS` | 402 | No credits remaining |
-| `STORAGE_LIMIT` | 403 | Transcript storage full |
 | `NOT_FOUND` | 404 | Transcription not found |
+| `INTERNAL_ERROR` | 500 | Unexpected server error |
 | `SERVICE_ERROR` | 503 | Transcription service unavailable (credit refunded) |
+
+> `STORAGE_LIMIT` (403) is retired. Nothing returns it — there are no storage
+> caps, so no upload is ever rejected on count. If you branch on it, that branch
+> is dead.
+
+## Upgrading from 1.x
+
+The public API changed on 2026-07-31; **1.0.4 and earlier are broken against it**.
+Storage moved from per-tier count caps to time-based retention, and
+`GET /v1/transcriptions` became cursor-paginated.
+
+| 1.x | 2.0 | What to do |
+|-----|-----|------------|
+| `listTranscriptions()` returned the whole library | Returns **one page** (default 100, max 200) | Loop on `nextCursor` while it is non-`null` — see [List Transcriptions](#list-transcriptions) |
+| `total` read as a library count | `total` is the **page** length | Branch on `hasMore` instead |
+| `updateSettings({ autoPruneStorage })` | **Removed** | Delete the call. `PATCH /v1/settings` now always returns 400 |
+| `Settings.autoPruneStorage` | `Settings.retention` | Read `retention.mode` / `retention.retentionDays` |
+| `Credits.storageLimit` was a per-tier number | Always `-1` | Drop any "storage full" logic; check `retention` instead |
+| `STORAGE_LIMIT` (403) error | **Retired** | Remove the branch — nothing returns it |
+| — | `Credits.storageUsedCapped` added | `storageUsed` is a floor when this is `true` |
+| — | `Platform` includes `'facebook'` | Widen any exhaustive `switch` on `platform` |
+
+The silent one is pagination: on 1.0.4 a caller with more than 100
+transcriptions receives only the first page, with no error, and `total` looks
+like a plausible library count. If you list transcriptions, you must upgrade.
 
 ## Configuration
 
@@ -165,6 +252,7 @@ const rs = new ReelScribe('rs_your_api_key', {
 | TikTok Videos | `https://www.tiktok.com/@user/video/1234567890` |
 | YouTube Shorts | `https://www.youtube.com/shorts/dQw4w9WgXcQ` |
 | YouTube Videos | `https://www.youtube.com/watch?v=dQw4w9WgXcQ` |
+| Facebook Reels | `https://www.facebook.com/reel/1234567890/` |
 
 ## Requirements
 

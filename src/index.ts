@@ -9,6 +9,8 @@ export type {
   ListTranscriptionsOptions,
   Platform,
   ReelScribeOptions,
+  RetentionInfo,
+  RetentionMode,
   Segment,
   Settings,
   Tier,
@@ -17,6 +19,5 @@ export type {
   Transcription,
   TranscriptionList,
   TranscriptionStatus,
-  UpdateSettingsOptions,
   VideoStats,
 } from './types'
