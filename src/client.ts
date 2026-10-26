@@ -122,10 +122,11 @@ export class ReelScribe {
   }
 
   /**
-   * Check your credit balance, subscription tier, storage usage and retention.
+   * Check your credit balance, subscription tier and storage usage.
    *
    * `storageLimit` is always `-1` — there is no storage cap on any tier.
-   * Read `retention` to learn how long transcriptions are kept.
+   * `retention` is a legacy field kept for older clients: nothing is deleted
+   * on any plan, so ignore it.
    *
    * @see https://reelscribe.app/api — GET /v1/credits
    */
@@ -134,12 +135,12 @@ export class ReelScribe {
   }
 
   /**
-   * Read your account settings, which are now reporting-only: the response
-   * contains your retention policy and nothing else.
+   * Read your account settings, which are reporting-only: the response holds
+   * only the legacy `retention` object, kept for older clients. Nothing is
+   * deleted on any plan, so ignore it.
    *
    * There is no counterpart writer. `autoPruneStorage` — the only setting this
-   * endpoint ever had — was removed when storage moved from per-tier count
-   * limits to time-based retention, so `PATCH /v1/settings` always fails.
+   * endpoint ever had — was removed, so `PATCH /v1/settings` always fails.
    *
    * @see https://reelscribe.app/api — GET /v1/settings
    */

@@ -1,6 +1,6 @@
 # ReelScribe Node.js SDK
 
-Official Node.js/TypeScript client for the [ReelScribe](https://reelscribe.app) API — transcribe Instagram Reels, TikTok videos, and YouTube Shorts programmatically.
+Official Node.js/TypeScript client for the [ReelScribe](https://reelscribe.app) API — transcribe Instagram Reels, TikTok videos, YouTube Shorts, Facebook Reels, and Threads, LinkedIn, X and Bluesky videos programmatically.
 
 [![npm version](https://img.shields.io/npm/v/reelscribe)](https://www.npmjs.com/package/reelscribe)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
@@ -39,7 +39,7 @@ if ('duplicate' in result) {
 
 ### Transcribe a Video
 
-Submit an Instagram Reel, TikTok video, YouTube Short, or Facebook Reel for transcription. Costs 1 credit per request.
+Submit an Instagram Reel, TikTok video, YouTube Short, Facebook Reel, or a Threads, LinkedIn, X or Bluesky video for transcription. Costs 1 credit per request.
 
 `transcribe()` returns either a `TranscribeResult` or — when you have already
 transcribed that URL — a `DuplicateResult` carrying the existing text, with no
@@ -140,38 +140,29 @@ console.log(credits.subscriptionStatus) // 'active'
 console.log(credits.storageUsed)        // 42  — completed transcriptions stored
 console.log(credits.storageUsedCapped)  // false — true means the real figure is higher
 console.log(credits.storageLimit)       // -1  — always; there is no storage cap
-console.log(credits.retention)          // { mode: 'unlimited', deletesAfter: null, ... }
 ```
 
-There are no storage caps on any tier. Storage is bounded by time instead —
-`retention` tells you how long transcriptions are kept:
+There are no storage caps on any tier, and nothing is deleted on any plan.
 
-| `mode` | Meaning |
-|--------|---------|
-| `unlimited` | Subscription active — nothing is ever auto-deleted |
-| `rolling` | Never subscribed — each transcription is removed `retentionDays` after it was created |
-| `lapsing` | Subscription ended — the whole library is removed at `deletesAfter` (epoch ms) |
-
-Anything created before `retention.policyDate` is grandfathered and never
-auto-deleted, on any tier.
+`credits.retention` is still returned so older clients keep working, but it is
+deprecated and no longer describes real behavior. The 30-day retention policy
+was retracted on 2026-10-26. Ignore the whole object, `deletesAfter` in
+particular.
 
 `storageUsed` is a bounded probe (up to 2,000 rows). When `storageUsedCapped`
 is `true`, treat `storageUsed` as a floor rather than an exact count.
 
 ### Settings
 
-Settings are read-only — they report your retention policy and nothing else.
+Settings are read-only. The response holds only the deprecated `retention`
+object, kept for older clients. Nothing is deleted on any plan, so ignore it.
 
 ```ts
-const { retention } = await rs.getSettings()
-
-console.log(retention.mode)          // 'rolling'
-console.log(retention.retentionDays) // 30
+const settings = await rs.getSettings()
 ```
 
 There is no `updateSettings()`. `autoPruneStorage` was the only writable
-setting and it no longer exists: it deleted your oldest work to stay under a
-count cap, and there are no count caps.
+setting and it no longer exists.
 
 ### Health Check
 
@@ -223,8 +214,8 @@ Storage moved from per-tier count caps to time-based retention, and
 | `listTranscriptions()` returned the whole library | Returns **one page** (default 100, max 200) | Loop on `nextCursor` while it is non-`null` — see [List Transcriptions](#list-transcriptions) |
 | `total` read as a library count | `total` is the **page** length | Branch on `hasMore` instead |
 | `updateSettings({ autoPruneStorage })` | **Removed** | Delete the call. `PATCH /v1/settings` now always returns 400 |
-| `Settings.autoPruneStorage` | `Settings.retention` | Read `retention.mode` / `retention.retentionDays` |
-| `Credits.storageLimit` was a per-tier number | Always `-1` | Drop any "storage full" logic; check `retention` instead |
+| `Settings.autoPruneStorage` | `Settings.retention` (deprecated) | Nothing to read: nothing is deleted on any plan |
+| `Credits.storageLimit` was a per-tier number | Always `-1` | Drop any "storage full" logic; there is nothing to check |
 | `STORAGE_LIMIT` (403) error | **Retired** | Remove the branch — nothing returns it |
 | — | `Credits.storageUsedCapped` added | `storageUsed` is a floor when this is `true` |
 | — | `Platform` includes `'facebook'` | Widen any exhaustive `switch` on `platform` |
@@ -232,6 +223,13 @@ Storage moved from per-tier count caps to time-based retention, and
 The silent one is pagination: on 1.0.4 a caller with more than 100
 transcriptions receives only the first page, with no error, and `total` looks
 like a plausible library count. If you list transcriptions, you must upgrade.
+
+## Upgrading from 2.0
+
+2.1 is additive. `Platform` now also includes `'threads'`, `'linkedin'`, `'x'`
+and `'bluesky'`, so widen any exhaustive `switch` on `platform`. `RetentionInfo`
+and `RetentionMode` are deprecated but unchanged: the API still returns
+`retention`, nothing is deleted on any plan, and you should ignore it.
 
 ## Configuration
 
@@ -253,6 +251,10 @@ const rs = new ReelScribe('rs_your_api_key', {
 | YouTube Shorts | `https://www.youtube.com/shorts/dQw4w9WgXcQ` |
 | YouTube Videos | `https://www.youtube.com/watch?v=dQw4w9WgXcQ` |
 | Facebook Reels | `https://www.facebook.com/reel/1234567890/` |
+| Threads | `https://www.threads.com/@nasa/post/DeMqtuYgkaL` |
+| LinkedIn | `https://www.linkedin.com/posts/someone_slug-activity-7439430699750674432-gKvQ` |
+| X | `https://x.com/elonmusk/status/1585341984679469056` |
+| Bluesky | `https://bsky.app/profile/theonion.com/post/3myfyiza3yf2y` |
 
 ## Requirements
 
