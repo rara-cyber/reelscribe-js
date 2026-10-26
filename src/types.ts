@@ -1,5 +1,13 @@
 /** Supported video platforms. */
-export type Platform = 'instagram' | 'tiktok' | 'youtube' | 'facebook'
+export type Platform =
+  | 'instagram'
+  | 'tiktok'
+  | 'youtube'
+  | 'facebook'
+  | 'threads'
+  | 'linkedin'
+  | 'x'
+  | 'bluesky'
 
 /** Transcription lifecycle status. */
 export type TranscriptionStatus =
@@ -17,7 +25,7 @@ export type Tier = 'free' | 'creator' | 'agency' | 'enterprise'
 // ---------------------------------------------------------------------------
 
 export interface TranscribeOptions {
-  /** Instagram, TikTok, YouTube, or Facebook URL (max 2048 chars). */
+  /** Instagram, TikTok, YouTube, Facebook, Threads, LinkedIn, X, or Bluesky URL (max 2048 chars). */
   url: string
   /** Optional HTTPS webhook URL — receives a POST when the job finishes. */
   resumeUrl?: string
@@ -121,26 +129,33 @@ export interface TranscriptionList {
 }
 
 /**
- * How long transcriptions are kept.
+ * Legacy retention mode.
  *
- * - `unlimited` — subscription is active; nothing is auto-deleted.
- * - `rolling` — never subscribed; each transcription is removed
- *   `retentionDays` after it was created.
- * - `lapsing` — subscription ended; the whole library is removed at
- *   `deletesAfter`.
+ * @deprecated Kept for compatibility with older clients. Nothing is deleted on
+ * any plan (the 30-day retention policy was retracted on 2026-10-26), so every
+ * mode, including `rolling` and `lapsing`, describes a policy that no longer
+ * runs. Do not branch on it.
  */
 export type RetentionMode = 'unlimited' | 'rolling' | 'lapsing'
 
+/**
+ * Legacy retention object. The API still returns it so older clients keep
+ * working, but it no longer describes real behavior: nothing is deleted on any
+ * plan. Ignore every field, `deletesAfter` in particular.
+ *
+ * @deprecated Kept for compatibility only.
+ */
 export interface RetentionInfo {
+  /** @deprecated Kept for compatibility. Nothing is deleted on any plan. */
   mode: RetentionMode
-  /** Epoch ms when the library is deleted. Only set for `lapsing`. */
-  deletesAfter: number | null
-  /** Length of the rolling window, in days. */
-  retentionDays: number
   /**
-   * Epoch ms of the retention policy start. Anything created before this is
-   * grandfathered and never auto-deleted, on any tier.
+   * @deprecated Ignore this. Nothing is deleted on any plan, so no deletion
+   * date applies even if this is set.
    */
+  deletesAfter: number | null
+  /** @deprecated Kept for compatibility. Nothing is deleted on any plan. */
+  retentionDays: number
+  /** @deprecated Kept for compatibility. Nothing is deleted on any plan. */
   policyDate: number
 }
 
@@ -156,19 +171,27 @@ export interface Credits {
   /** True when the real figure is above the probe, i.e. `storageUsed` is a floor. */
   storageUsedCapped: boolean
   /**
-   * Always `-1` ("no limit"). Storage is bounded by time now, not by count —
-   * see `retention`.
+   * Always `-1` ("no limit").
    *
    * @deprecated Retained only so 1.x callers keep compiling. There is no
    * storage cap on any tier and nothing rejects an upload on count.
    */
   storageLimit: -1
-  /** When this account's transcriptions are deleted. */
+  /**
+   * Legacy field, returned for older clients. Nothing is deleted on any plan.
+   *
+   * @deprecated Ignore it, including `deletesAfter`.
+   */
   retention: RetentionInfo
 }
 
 export interface Settings {
-  /** The only thing this endpoint reports. There are no writable settings. */
+  /**
+   * Legacy field, returned for older clients. There are no writable settings,
+   * and nothing is deleted on any plan.
+   *
+   * @deprecated Ignore it, including `deletesAfter`.
+   */
   retention: RetentionInfo
 }
 
